@@ -5,6 +5,9 @@ import ast
 
 
 class MyTransformer(ast.NodeTransformer):
+    """
+    Заменяет все переменные на х
+    """
     def visit_Name(self, variable):
         return ast.Name(**{**variable.__dict__, 'id': 'x'})
 
@@ -13,12 +16,20 @@ class Text:
     def __init__(self, text):
         self.text = text
 
+    """
+    Удаляет комментарии
+    """
     def remove_comments(self):
         self.text = re.sub(r"'''[\s\S]*'''", "", self.text)
         self.text = re.sub(r""""[\s\S]*""""", "", self.text)
 
+    """
+    Заменяет все переменные на х
+    """
     def remove_variables(self):
-        self.text = ast.unparse(MyTransformer().visit(ast.parse(self.text)))
+        tree = ast.parse(self.text)
+        vis_tree = MyTransformer().visit(tree)
+        self.text = ast.unparse(vis_tree)
 
     def prepare_to_antiplagiarism(self):
         self.remove_variables()
@@ -33,12 +44,18 @@ class WorkWithFiles:
         self.files = []
         self.res = []
 
+    """
+    Ввод аргументов из терминала
+    """
     def input_args(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('input')
         parser.add_argument('scores')
         self.args = parser.parse_args()
 
+    """
+    Ввод аргументов из терминала
+    """
     def read_args(self):
         self.input_args()
         with open(self.args.input, "r") as input:
@@ -49,6 +66,9 @@ class WorkWithFiles:
                     self.files.append((Text(first_file.read()), Text(second_file.read())))
                 line = input.readline()
 
+    """
+    Записать элементы списка построчно
+    """
     def write_text(self, lines):
         with open(self.args.scores, "w") as output:
             output.write("\n".join(lines))
@@ -60,6 +80,9 @@ class Levenshtein:
         self.distances = []
         self.get_Levenshtein_distances()
 
+    """
+    Получение расстояния Левенштейна в процентах
+    """
     @staticmethod
     def get_Levenshtein_distance(first, second):
         n, m = len(first) + 1, len(second) + 1
@@ -77,6 +100,9 @@ class Levenshtein:
                                        matrix[i - 1][j - 1] + int(first[i - 1] != second[j - 1]))
         return round(1 - matrix[n - 1][m - 1] / max(n - 1, m - 1), 2)
 
+    """
+    Вызов методов для чтения файлов, получение и запись расстояний Левенштейна
+    """
     def get_Levenshtein_distances(self):
         self.help_files.read_args()
         for files_pair in self.help_files.files:
@@ -85,11 +111,9 @@ class Levenshtein:
             second = files_pair[1]
             second.prepare_to_antiplagiarism()
             distance = self.get_Levenshtein_distance(first.text, second.text)
-            print(distance)
             self.distances.append(str(distance))
         self.help_files.write_text(self.distances)
 
 
 if __name__ == '__main__':
     get_Levenshtein_distance = Levenshtein()
-
