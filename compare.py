@@ -21,8 +21,9 @@ class Text:
         self.text = ast.unparse(MyTransformer().visit(ast.parse(self.text)))
 
     def prepare_to_antiplagiarism(self):
+        self.remove_variables()
         self.remove_comments()
-       # self.remove_variables()
+
 
 
 class WorkWithFiles:
@@ -91,3 +92,4 @@ class Levenshtein:
 
 if __name__ == '__main__':
     get_Levenshtein_distance = Levenshtein()
+
