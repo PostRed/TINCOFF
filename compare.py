@@ -1,12 +1,28 @@
 import argparse
 import numpy as np
+import re
+import ast
+
+
+class MyTransformer(ast.NodeTransformer):
+    def visit_Name(self, variable):
+        return ast.Name(**{**variable.__dict__, 'id': 'x'})
+
 
 class Text:
     def __init__(self, text):
         self.text = text
 
-    def improve_text(self):
-        self.text += "123"
+    def remove_comments(self):
+        self.text = re.sub(r"'''[\s\S]*'''", "", self.text)
+        self.text = re.sub(r""""[\s\S]*""""", "", self.text)
+
+    def remove_variables(self):
+        self.text = ast.unparse(MyTransformer().visit(ast.parse(self.text)))
+
+    def prepare_to_antiplagiarism(self):
+        self.remove_comments()
+       # self.remove_variables()
 
 
 class WorkWithFiles:
@@ -64,14 +80,14 @@ class Levenshtein:
         self.help_files.read_args()
         for files_pair in self.help_files.files:
             first = files_pair[0]
-            first.improve_text()
+            first.prepare_to_antiplagiarism()
             second = files_pair[1]
-            second.improve_text()
+            second.prepare_to_antiplagiarism()
             distance = self.get_Levenshtein_distance(first.text, second.text)
             print(distance)
             self.distances.append(str(distance))
         self.help_files.write_text(self.distances)
 
 
-get_Levenshtein_distance = Levenshtein()
-
+if __name__ == '__main__':
+    get_Levenshtein_distance = Levenshtein()
